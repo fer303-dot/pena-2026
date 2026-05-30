@@ -689,7 +689,7 @@ body {
         </div>
       </div>
       <div id="btnAddShow" style="display:none;margin-top:12px">
-        <button class="btn btn-primary" onclick="document.getElementById('addShowForm').style.display='block';this.style.display='none'">➕ Agregar Show</button>
+        <button class="btn btn-primary" onclick="document.getElementById('addShowForm').style.display='block'">➕ Agregar Show</button>
       </div>
     </div>
   </div>
@@ -765,7 +765,7 @@ body {
     </div>
 
     <div id="btnNuevoGasto" style="display:none;margin-bottom:16px">
-      <button class="btn btn-primary" onclick="document.getElementById('formGasto').style.display='block';this.style.display='none'">➕ Nuevo Movimiento</button>
+      <button class="btn btn-primary" onclick="document.getElementById('formGasto').style.display='block'">➕ Nuevo Movimiento</button>
     </div>
 
     <!-- Tabla gastos -->
@@ -810,7 +810,7 @@ body {
         </div>
       </div>
       <div id="btnAddSponsor" style="display:none;margin-top:12px">
-        <button class="btn btn-primary" onclick="document.getElementById('formSponsor').style.display='block';this.style.display='none'">➕ Agregar Sponsor</button>
+        <button class="btn btn-primary" onclick="document.getElementById('formSponsor').style.display='block'">➕ Agregar Sponsor</button>
       </div>
     </div>
   </div>
@@ -834,7 +834,7 @@ body {
         </div>
       </div>
       <div id="btnAddProveedor" style="display:none;margin-top:12px">
-        <button class="btn btn-primary" onclick="document.getElementById('formProveedor').style.display='block';this.style.display='none'">➕ Agregar Proveedor</button>
+        <button class="btn btn-primary" onclick="document.getElementById('formProveedor').style.display='block'">➕ Agregar Proveedor</button>
       </div>
     </div>
   </div>
@@ -858,7 +858,7 @@ body {
         </div>
       </div>
       <div id="btnAddVoluntario" style="display:none;margin-top:12px">
-        <button class="btn btn-primary" onclick="document.getElementById('formVoluntario').style.display='block';this.style.display='none'">➕ Agregar Voluntario</button>
+        <button class="btn btn-primary" onclick="document.getElementById('formVoluntario').style.display='block'">➕ Agregar Voluntario</button>
       </div>
     </div>
   </div>
@@ -1244,7 +1244,6 @@ function addShow() {
   document.getElementById('showNombre').value = '';
   document.getElementById('showHora').value = '';
   document.getElementById('addShowForm').style.display = 'none';
-  document.getElementById('btnAddShow').style.display = 'block';
   saveToFirebase();
   renderShows();
 }
@@ -1357,7 +1356,6 @@ function agregarGasto() {
   document.getElementById('categoriaNueva').style.display = 'none';
   document.getElementById('gastoCategoria').selectedIndex = 0;
   document.getElementById('formGasto').style.display = 'none';
-  document.getElementById('btnNuevoGasto').style.display = 'block';
 
   saveToFirebase();
   renderGastos();
@@ -1401,7 +1399,6 @@ function addSponsor() {
   document.getElementById('sponsorTel').value = '';
   document.getElementById('sponsorDona').value = '';
   document.getElementById('formSponsor').style.display = 'none';
-  document.getElementById('btnAddSponsor').style.display = 'block';
   saveToFirebase();
   renderSponsors();
 }
@@ -1500,7 +1497,6 @@ function addVoluntarioGeneral() {
   document.getElementById('volApellido').value = '';
   document.getElementById('volTel').value = '';
   document.getElementById('formVoluntario').style.display = 'none';
-  document.getElementById('btnAddVoluntario').style.display = 'block';
   saveToFirebase();
   renderVoluntariosGenerales();
 }
