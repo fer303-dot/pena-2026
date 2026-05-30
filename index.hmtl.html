@@ -1,569 +1,1541 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PEÑA 2026 - Agenda Digital</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --gold: #D4AF37;
-            --dark: #2c1810;
-            --light: #f5e6d3;
-            --accent: #8B4513;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%); color: #333; min-height: 100vh; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); overflow: hidden; }
-        .header { background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%); color: var(--gold); padding: 30px; text-align: center; }
-        .header h1 { font-size: 2.5em; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .header p { font-size: 1.1em; opacity: 0.9; }
-        .main-content { padding: 20px; }
-        .tab-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--gold); padding-bottom: 15px; }
-        .tab-btn { padding: 10px 15px; border: none; background: #f0f0f0; color: #333; cursor: pointer; border-radius: 5px; font-weight: 600; transition: 0.3s; font-size: 0.9em; }
-        .tab-btn.active { background: var(--gold); color: white; }
-        .tab-btn:hover { background: var(--gold); color: white; }
-        .section { display: none; }
-        .section.active { display: block; }
-        .admin-bar { background: var(--gold); color: white; padding: 15px; text-align: center; margin-bottom: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .admin-bar button { background: white; color: var(--gold); border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 700; }
-        .login-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; }
-        .login-box h1 { color: var(--dark); margin-bottom: 30px; font-size: 2em; }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 1em; }
-        .login-box button { background: var(--gold); color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1em; margin-top: 15px; width: 100%; }
-        .stand-card { background: linear-gradient(135deg, #f5e6d3 0%, #ebe0d5 100%); border-left: 5px solid var(--gold); padding: 20px; margin: 15px 0; border-radius: 8px; }
-        .stand-title { font-size: 1.5em; color: var(--dark); margin-bottom: 15px; font-weight: bold; }
-        .stand-info { background: white; padding: 12px; margin: 8px 0; border-radius: 6px; border-left: 3px solid var(--gold); }
-        .stand-info label { font-weight: 700; color: var(--dark); display: block; margin-bottom: 5px; }
-        .stand-info input, .stand-info select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        .voluntario-list { background: white; padding: 10px; margin-top: 10px; border-radius: 4px; }
-        .voluntario-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f9f9f9; margin: 5px 0; border-radius: 4px; }
-        .voluntario-item button { background: #d32f2f; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
-        .insumos-section { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; }
-        .insumo-categoria { margin-bottom: 15px; }
-        .insumo-titulo { font-weight: 700; color: var(--gold); margin-bottom: 5px; }
-        .insumo-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 5px; }
-        .insumo-item { padding: 5px 10px; background: #f9f9f9; border-radius: 4px; font-size: 0.9em; }
-        .hidden { display: none; }
-        .link-button { display: inline-block; background: var(--gold); color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; margin: 10px 5px 10px 0; cursor: pointer; border: none; }
-        .link-button:hover { opacity: 0.8; }
-        .section-title { font-size: 1.8em; color: var(--dark); margin-bottom: 20px; border-bottom: 3px solid var(--gold); padding-bottom: 10px; }
-        .sponsor-card { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid var(--gold); }
-        .add-voluntario-group { display: grid; gap: 10px; margin-top: 10px; }
-        .add-voluntario-group input, .add-voluntario-group select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        .add-voluntario-group button { background: var(--gold); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 700; }
-        .gasto-card { background: linear-gradient(135deg, #fff5e6 0%, #ffe8cc 100%); border-left: 5px solid var(--gold); padding: 20px; margin: 15px 0; border-radius: 8px; }
-        .gasto-input { padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1em; width: 100%; margin-bottom: 8px; }
-        .gasto-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .gasto-item { display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 80px; gap: 10px; align-items: center; padding: 10px; background: #f9f9f9; margin: 5px 0; border-radius: 4px; font-size: 0.9em; }
-        .gasto-item button { background: #d32f2f; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
-        .gasto-resumen { background: white; padding: 15px; margin: 15px 0; border-radius: 6px; border-left: 5px solid var(--gold); }
-        .btn-agregar { background: var(--gold); color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 1em; width: 100%; }
-        .chart-wrapper { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .chart-wrapper canvas { max-height: 400px; }
-        @media print {
-            body { background: white; padding: 0; }
-            .container { box-shadow: none; border-radius: 0; }
-            .tab-buttons, .admin-bar, .gasto-card, .hidden { display: none !important; }
-            .section { display: block !important; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎉 PEÑA 2026 - Agenda Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0mgdpVb62ymeYIc5OBd0UkR0Au4LgCNM",
+    authDomain: "pena-2026.firebaseapp.com",
+    databaseURL: "https://pena-2026-default-rtdb.firebaseio.com",
+    projectId: "pena-2026",
+    storageBucket: "pena-2026.appspot.com",
+    messagingSenderId: "000000000000",
+    appId: "1:000000000000:web:000000000000000000"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  window.db = db;
+  window.dbRef = ref;
+  window.dbSet = set;
+  window.dbOnValue = onValue;
+  window.dbPush = push;
+  window.dbRemove = remove;
+  window.dbUpdate = update;
+  window.firebaseReady = true;
+  document.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<style>
+:root {
+  --rojo: #e63946;
+  --amarillo: #ffd60a;
+  --verde: #2dc653;
+  --azul: #0096c7;
+  --naranja: #ff6b35;
+  --violeta: #7b2d8b;
+  --fondo: #fff9f0;
+  --card: #ffffff;
+  --texto: #1a1a2e;
+  --gris: #6c757d;
+  --borde: #e8e0d5;
+  --sombra: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  min-height: 100vh;
+}
+
+/* HEADER */
+.header {
+  background: linear-gradient(135deg, var(--rojo) 0%, var(--naranja) 50%, var(--amarillo) 100%);
+  padding: 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(230,57,70,0.4);
+}
+
+.header h1 {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: white;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  letter-spacing: 1px;
+}
+
+.header p { color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-top: 4px; }
+
+.badge-admin {
+  display: inline-block;
+  background: rgba(255,255,255,0.25);
+  color: white;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+/* LOGIN */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.login-box {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  text-align: center;
+  width: 90%;
+  max-width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.login-box h2 { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: var(--rojo); margin-bottom: 8px; }
+.login-box p { color: var(--gris); margin-bottom: 24px; font-size: 0.95rem; }
+
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.login-btn:active { transform: scale(0.97); }
+
+.btn-admin {
+  background: linear-gradient(135deg, var(--rojo), var(--naranja));
+  color: white;
+  box-shadow: 0 4px 15px rgba(230,57,70,0.4);
+}
+
+.btn-voluntario {
+  background: linear-gradient(135deg, var(--azul), #00b4d8);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0,150,199,0.4);
+}
+
+.pass-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 4px;
+  font-size: 1.3rem;
+}
+
+.pass-input:focus { outline: none; border-color: var(--rojo); }
+
+/* NAV TABS */
+.nav-tabs {
+  display: flex;
+  overflow-x: auto;
+  background: white;
+  border-bottom: 3px solid var(--borde);
+  padding: 0 10px;
+  gap: 4px;
+  scrollbar-width: none;
+  position: sticky;
+  top: 90px;
+  z-index: 90;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  padding: 12px 18px;
+  border: none;
+  background: none;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--gris);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: all 0.2s;
+}
+
+.nav-tab:hover { color: var(--rojo); }
+.nav-tab.active { color: var(--rojo); border-bottom-color: var(--rojo); }
+
+/* CONTENT */
+.content { padding: 20px; max-width: 900px; margin: 0 auto; }
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid var(--borde);
+}
+
+.card-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* STAND GRID */
+.stands-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.stand-card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--sombra);
+  border: 2px solid var(--borde);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stand-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+
+.stand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.stand-emoji {
+  font-size: 2rem;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+}
+
+.stand-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+}
+
+.stand-sub { font-size: 0.8rem; color: var(--gris); }
+
+/* FORM ELEMENTS */
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.field-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+  background: var(--fondo);
+}
+
+.field-input:focus { outline: none; border-color: var(--azul); background: white; }
+.field-input:disabled { background: #f5f5f5; color: var(--gris); cursor: not-allowed; }
+
+.field-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  background: var(--fondo);
+  cursor: pointer;
+}
+
+.field-select:focus { outline: none; border-color: var(--azul); }
+
+/* BUTTONS */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary { background: var(--rojo); color: white; }
+.btn-success { background: var(--verde); color: white; }
+.btn-info { background: var(--azul); color: white; }
+.btn-warning { background: var(--amarillo); color: var(--texto); }
+.btn-danger { background: #dc3545; color: white; }
+.btn-small { padding: 6px 12px; font-size: 0.8rem; }
+.btn-whatsapp { background: #25D366; color: white; }
+
+/* VOLUNTARIOS */
+.voluntarios-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.voluntario-tag {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  color: #1565c0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.voluntario-tag .remove-btn {
+  cursor: pointer;
+  color: #e53935;
+  font-weight: 900;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* INSUMOS */
+.insumos-section { margin-top: 12px; }
+
+.insumo-categoria {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 8px 0 4px;
+}
+
+.insumo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.insumo-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--verde);
+  cursor: pointer;
+}
+
+.insumo-text { flex: 1; font-size: 0.9rem; }
+.insumo-text.checked { text-decoration: line-through; color: var(--gris); }
+
+/* LINK WHATSAPP */
+.whatsapp-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e8f5e9;
+  border: 2px solid #a5d6a7;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.whatsapp-link a {
+  color: #2e7d32;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  flex: 1;
+  word-break: break-all;
+}
+
+.whatsapp-link a:hover { text-decoration: underline; }
+
+/* GASTOS */
+.gastos-resumen {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.gasto-cuadro {
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  color: white;
+}
+
+.gasto-cuadro.entrada { background: linear-gradient(135deg, #2dc653, #1a9e3f); }
+.gasto-cuadro.salida { background: linear-gradient(135deg, #e63946, #c1121f); }
+.gasto-cuadro.diferencia { background: linear-gradient(135deg, #0096c7, #0077b6); }
+
+.gasto-cuadro .monto {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.6rem;
+}
+
+.gasto-cuadro .etiqueta { font-size: 0.8rem; opacity: 0.9; margin-top: 4px; }
+
+.gastos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.gastos-tabla th {
+  background: var(--texto);
+  color: white;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+}
+
+.gastos-tabla th:first-child { border-radius: 10px 0 0 10px; }
+.gastos-tabla th:last-child { border-radius: 0 10px 10px 0; }
+
+.gastos-tabla td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.gastos-tabla tr:hover td { background: #fef9f0; }
+
+.tipo-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.tipo-gasto { background: #ffebee; color: #c62828; }
+.tipo-donacion { background: #e8f5e9; color: #2e7d32; }
+.tipo-ingreso { background: #e3f2fd; color: #1565c0; }
+
+/* SHOWS */
+.show-item {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.show-num {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--amarillo);
+  min-width: 40px;
+}
+
+.show-info { flex: 1; }
+.show-nombre { font-weight: 800; font-size: 1rem; }
+.show-hora { color: rgba(255,255,255,0.6); font-size: 0.85rem; }
+
+/* SPONSORS / PROVEEDORES */
+.contacto-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--borde);
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.contacto-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.contacto-info { flex: 1; }
+.contacto-nombre { font-weight: 800; font-size: 0.95rem; }
+.contacto-tel { font-size: 0.82rem; color: var(--gris); }
+.contacto-detalle { font-size: 0.82rem; color: var(--azul); font-weight: 600; margin-top: 2px; }
+
+/* CHART */
+.chart-container {
+  max-width: 350px;
+  margin: 0 auto 20px;
+}
+
+/* SYNC INDICATOR */
+.sync-bar {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border-radius: 50px;
+  padding: 10px 18px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 999;
+  transition: all 0.3s;
+}
+
+.sync-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--verde);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* SECCIÓN TÍTULO */
+.section-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.6rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ACCORDION */
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 14px 18px;
+  background: var(--fondo);
+  border-radius: 14px;
+  margin-bottom: 4px;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.accordion-header:hover { background: #f0e8dc; }
+.accordion-body { display: none; padding: 14px 4px; }
+.accordion-body.open { display: block; }
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .stands-grid { grid-template-columns: 1fr; }
+  .gastos-resumen { grid-template-columns: 1fr; }
+  .gasto-cuadro .monto { font-size: 1.3rem; }
+  .header h1 { font-size: 1.5rem; }
+  .content { padding: 12px; }
+  .gastos-tabla { font-size: 0.78rem; }
+  .gastos-tabla td, .gastos-tabla th { padding: 8px 6px; }
+}
+
+/* PRINT */
+@media print {
+  .login-overlay, .sync-bar, .nav-tabs, .btn, .header { display: none !important; }
+  .section { display: block !important; }
+}
+
+.add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.divider { height: 1px; background: var(--borde); margin: 16px 0; }
+
+.empty-msg {
+  text-align: center;
+  color: var(--gris);
+  padding: 20px;
+  font-style: italic;
+}
+
+.alert-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  display: none;
+}
+</style>
 </head>
 <body>
-    <div id="loginScreen" class="login-screen">
-        <div class="login-box">
-            <h1>🍺 PEÑA 2026</h1>
-            <p style="margin-bottom: 30px;">Agenda Digital</p>
-            <div style="text-align: left;">
-                <label>Contraseña:</label>
-                <input type="password" id="passwordInput" placeholder="Ingresa contraseña" onkeypress="if(event.key==='Enter') login()">
-            </div>
-            <button onclick="login()">👨‍💼 Administrador</button>
-            <button onclick="loginAsVoluntario()" style="background: #8B4513; margin-top: 10px;">👁️ Entrar como Voluntario</button>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div style="font-size:3rem;margin-bottom:12px">🎉</div>
+    <h2>PEÑA 2026</h2>
+    <p>Ingresá a la agenda digital</p>
+    <input type="password" class="pass-input" id="passInput" placeholder="🔑 Contraseña Admin" maxlength="10">
+    <div id="passError" style="color:var(--rojo);font-size:0.85rem;margin-bottom:10px;display:none">Contraseña incorrecta</div>
+    <button class="login-btn btn-admin" onclick="loginAdmin()">🔐 Entrar como Admin</button>
+    <button class="login-btn btn-voluntario" onclick="loginVoluntario()">👀 Solo ver (Voluntario)</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>🎉 PEÑA 2026</h1>
+  <p>Agenda Digital · San Miguel de Tucumán</p>
+  <div id="adminBadge" class="badge-admin" style="display:none">🔐 MODO ADMIN</div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs" id="navTabs">
+  <button class="nav-tab active" onclick="showSection('stands')">🏪 Stands</button>
+  <button class="nav-tab" onclick="showSection('shows')">🎤 Shows</button>
+  <button class="nav-tab" onclick="showSection('gastos')">💰 Gastos</button>
+  <button class="nav-tab" onclick="showSection('sponsors')">🤝 Sponsors</button>
+  <button class="nav-tab" onclick="showSection('proveedores')">📦 Proveedores</button>
+  <button class="nav-tab" onclick="showSection('voluntarios')">👥 Voluntarios</button>
+  <button class="nav-tab" onclick="showSection('compartir')">📲 Compartir</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- ===== STANDS ===== -->
+  <div class="section active" id="section-stands">
+    <div class="section-title">🏪 Stands</div>
+    <div class="stands-grid" id="standsGrid"></div>
+  </div>
+
+  <!-- ===== SHOWS ===== -->
+  <div class="section" id="section-shows">
+    <div class="section-title">🎤 Espectáculos</div>
+    <div class="card">
+      <div id="showsList"></div>
+      <div id="addShowForm" style="display:none">
+        <div class="divider"></div>
+        <div class="field-label">Nombre del artista / show</div>
+        <input type="text" class="field-input" id="showNombre" placeholder="Nombre del show">
+        <div class="field-label">Horario</div>
+        <input type="text" class="field-input" id="showHora" placeholder="Ej: 21:00 hs">
+        <div class="add-row">
+          <button class="btn btn-success" onclick="addShow()">✅ Agregar</button>
+          <button class="btn" style="background:var(--borde)" onclick="document.getElementById('addShowForm').style.display='none'">Cancelar</button>
         </div>
+      </div>
+      <div id="btnAddShow" style="display:none;margin-top:12px">
+        <button class="btn btn-primary" onclick="document.getElementById('addShowForm').style.display='block';this.style.display='none'">➕ Agregar Show</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GASTOS ===== -->
+  <div class="section" id="section-gastos">
+    <div class="section-title">💰 Gastos</div>
+
+    <!-- Cuadros resumen -->
+    <div class="gastos-resumen">
+      <div class="gasto-cuadro entrada">
+        <div class="monto" id="totalEntrada">$0</div>
+        <div class="etiqueta">⬆️ ENTRADA</div>
+      </div>
+      <div class="gasto-cuadro salida">
+        <div class="monto" id="totalSalida">$0</div>
+        <div class="etiqueta">⬇️ SALIDA</div>
+      </div>
+      <div class="gasto-cuadro diferencia">
+        <div class="monto" id="totalDiferencia">$0</div>
+        <div class="etiqueta">📊 DIFERENCIA</div>
+      </div>
     </div>
 
-    <div id="mainApp" class="hidden">
-        <div class="container">
-            <div class="header">
-                <h1>🍺 PEÑA 2026</h1>
-                <p>Agenda Digital - Domingo 7 de junio | 13:00 a 18:00 hs</p>
-            </div>
-
-            <div class="main-content">
-                <div id="adminBar" class="hidden admin-bar">
-                    👤 MODO ADMINISTRADOR
-                    <div style="display:flex;gap:10px">
-                        <button onclick="compartirWhatsApp()" style="background:white;color:var(--gold);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:700">📱 Compartir</button>
-                        <button onclick="logout()" style="background:white;color:var(--gold);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:700">Cerrar</button>
-                    </div>
-                </div>
-
-                <div class="tab-buttons" id="standsTabButtons"></div>
-                <div class="tab-buttons">
-                    <button class="tab-btn" onclick="showTab('shows')">🎵 Shows</button>
-                    <button class="tab-btn" onclick="showTab('links')">🔗 Links</button>
-                    <button class="tab-btn" onclick="showTab('sponsors')">🏢 Sponsors</button>
-                    <button class="tab-btn" onclick="showTab('proveedores')">🚚 Proveedores</button>
-                    <button class="tab-btn" onclick="showTab('gastos')">💰 Gastos</button>
-                </div>
-
-                <div id="standsContainer"></div>
-
-                <div id="shows" class="section">
-                    <div class="section-title">🎵 Espectáculos</div>
-                    <div id="showsList"></div>
-                    <div id="addShowBtn" class="hidden">
-                        <input type="text" id="newShowName" placeholder="Nombre" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <input type="text" id="newShowPhone" placeholder="Teléfono" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <input type="text" id="newShowInsta" placeholder="Instagram" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <button onclick="addShow()" style="background:var(--gold);color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-weight:700">Agregar</button>
-                    </div>
-                </div>
-
-                <div id="links" class="section">
-                    <div class="section-title">🔗 Links</div>
-                    <div id="linksList"></div>
-                </div>
-
-                <div id="sponsors" class="section">
-                    <div class="section-title">🏢 Sponsors</div>
-                    <div id="sponsorsList"></div>
-                    <div id="addSponsorBtn" class="hidden">
-                        <input type="text" id="newSponsorName" placeholder="Nombre" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <input type="text" id="newSponsorPhone" placeholder="Teléfono" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <input type="text" id="newSponsorDona" placeholder="¿Qué dona?" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <button onclick="addSponsor()" style="background:var(--gold);color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-weight:700">Agregar</button>
-                    </div>
-                </div>
-
-                <div id="proveedores" class="section">
-                    <div class="section-title">🚚 Proveedores</div>
-                    <div id="proveedoresList"></div>
-                    <div id="addProveedorBtn" class="hidden">
-                        <input type="text" id="newProveedorName" placeholder="Nombre" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <input type="text" id="newProveedorPhone" placeholder="Teléfono" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <input type="text" id="newProveedorCompro" placeholder="¿Qué compró?" style="width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:4px;">
-                        <button onclick="addProveedor()" style="background:var(--gold);color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-weight:700">Agregar</button>
-                    </div>
-                </div>
-
-                <div id="gastos" class="section">
-                    <div class="section-title">💰 Gastos Detallados</div>
-                    <button onclick="window.print()" style="background:var(--gold);color:white;padding:12px 24px;border:none;border-radius:6px;cursor:pointer;font-weight:700;margin-bottom:15px;font-size:1em;width:100%;">🖨️ Imprimir Informe</button>
-                    
-                    <div id="adminGastosBtn" class="hidden">
-                        <div class="gasto-card">
-                            <h3 style="margin-bottom:15px;color:var(--dark);">➕ AGREGAR GASTO/INGRESO</h3>
-                            
-                            <label style="font-weight:700;color:var(--dark);margin-bottom:5px;display:block;">Concepto:</label>
-                            <input type="text" id="gastoConcepto" class="gasto-input" placeholder="Ej: Pizza, Empanadas, Bebidas">
-                            
-                            <label style="font-weight:700;color:var(--dark);margin-bottom:5px;display:block;">Persona/Responsable:</label>
-                            <input type="text" id="gastoPersona" class="gasto-input" placeholder="Ej: Marta, Juan">
-                            
-                            <div class="gasto-row">
-                                <div>
-                                    <label style="font-weight:700;color:var(--dark);margin-bottom:5px;display:block;">Categoría:</label>
-                                    <select id="gastoCategoria" class="gasto-input">
-                                        <option value="">Seleccionar</option>
-                                        <option value="Comida">🍽️ Comida</option>
-                                        <option value="Bebida">🥤 Bebida</option>
-                                        <option value="Insumos">📦 Insumos</option>
-                                        <option value="Mobiliario">🪑 Mobiliario</option>
-                                        <option value="Técnica">🎤 Técnica</option>
-                                        <option value="Limpieza">🧹 Limpieza</option>
-                                        <option value="Recreación">🎪 Recreación</option>
-                                        <option value="Donaciones">🎁 Donaciones</option>
-                                        <option value="Otros">📋 Otros</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="font-weight:700;color:var(--dark);margin-bottom:5px;display:block;">Tipo:</label>
-                                    <select id="gastoTipo" class="gasto-input">
-                                        <option value="Gasto">📉 Gasto</option>
-                                        <option value="Donación">🎁 Donación</option>
-                                        <option value="Ingreso">📈 Ingreso</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <label style="font-weight:700;color:var(--dark);margin-bottom:5px;display:block;">Monto ($):</label>
-                            <input type="number" id="gastoMonto" class="gasto-input" placeholder="Ej: 100, 350">
-                            
-                            <button onclick="agregarGasto()" class="btn-agregar">✅ Agregar Movimiento</button>
-                        </div>
-                    </div>
-
-                    <div id="gastosContent"></div>
-                </div>
-            </div>
-        </div>
+    <!-- Gráfico -->
+    <div class="card">
+      <div class="card-title">📊 Distribución por Categoría</div>
+      <div class="chart-container">
+        <canvas id="gastosChart"></canvas>
+      </div>
     </div>
 
-    <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyD0mgdpVb62ymeYIc5OBd0UkR0Au4LgCNM",
-            authDomain: "pena-2026.firebaseapp.com",
-            databaseURL: "https://pena-2026-default-rtdb.firebaseio.com",
-            projectId: "pena-2026",
-            storageBucket: "pena-2026.firebasestorage.app",
-            messagingSenderId: "214508709512",
-            appId: "1:214508709512:web:ccb5ce6c925c16e177213d",
-            measurementId: "G-THZ5101WGR"
-        };
+    <!-- Formulario nuevo gasto -->
+    <div class="card" id="formGasto" style="display:none">
+      <div class="card-title">➕ Nuevo Movimiento</div>
+      <div class="field-label">Concepto</div>
+      <input type="text" class="field-input" id="gastoConcepto" placeholder="Descripción del gasto/ingreso">
+      <div class="field-label">Persona responsable</div>
+      <input type="text" class="field-input" id="gastoPersona" placeholder="Nombre">
+      <div class="field-label">Categoría</div>
+      <select class="field-select" id="gastoCategoria" onchange="checkCategoriaPersonalizada(this)">
+        <option>🍽️ Gastronomía</option>
+        <option>🥤 Bebidas</option>
+        <option>🍳 Insumos de Cocina</option>
+        <option>🪑 Mobiliario</option>
+        <option>🏗️ Estructuras</option>
+        <option>🔊 Sonido e Iluminación</option>
+        <option>🎨 Decoración</option>
+        <option>🧹 Limpieza</option>
+        <option>🚻 Baños</option>
+        <option>👥 Personal</option>
+        <option>💵 Caja y Ventas</option>
+        <option>🎤 Espectáculos</option>
+        <option>🎰 Sorteos y Entretenimiento</option>
+        <option>🚨 Seguridad y Emergencias</option>
+        <option>🚛 Logística y Transporte</option>
+        <option>📢 Difusión y Publicidad</option>
+        <option value="otra">➕ Otra categoría...</option>
+      </select>
+      <input type="text" class="field-input" id="categoriaNueva" placeholder="Escribí la nueva categoría" style="display:none">
+      <div class="field-label">Tipo</div>
+      <select class="field-select" id="gastoTipo">
+        <option value="Gasto">💸 Gasto (Salida)</option>
+        <option value="Donacion">🎁 Donación (Entrada)</option>
+        <option value="Ingreso">💚 Ingreso (Entrada)</option>
+      </select>
+      <div class="field-label">Monto $</div>
+      <input type="number" class="field-input" id="gastoMonto" placeholder="0.00">
+      <div class="add-row">
+        <button class="btn btn-success" onclick="agregarGasto()">✅ Guardar</button>
+        <button class="btn" style="background:var(--borde)" onclick="document.getElementById('formGasto').style.display='none'">Cancelar</button>
+      </div>
+    </div>
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database(app);
+    <div id="btnNuevoGasto" style="display:none;margin-bottom:16px">
+      <button class="btn btn-primary" onclick="document.getElementById('formGasto').style.display='block';this.style.display='none'">➕ Nuevo Movimiento</button>
+    </div>
 
-        let isAdmin = false;
-        let gastoChart = null;
-        const voluntariosBase = ['Virginia Manson', 'Marcelo Bustos', 'Roxana Aguaysol', 'Andrea Guzmán', 'Patricia López', 'Melina Rojas', 'Evelina Gómez', 'Maria Ponce', 'Maria Iñigo', 'Vanesa Galvan', 'Andrea Carrizo', 'Marcela Leccese', 'Dolores González', 'Virginia Zerrizuela', 'Carolina abaca', 'Cecilia Celiz', 'GISELA TAPIA', 'María Romero', 'Silvia Barraza', 'Magali Espinel', 'Ileana Moreno', 'Maria Dipierri', 'Alicia Cordoba', 'Fernanda Arroyo', 'Flaviana Soria', 'Lorena Garcia', 'Carolina Rapisarda', 'Maria Caliva', 'Stella Abdala', 'Maria Gutiérrez', 'Lorena Gomez', 'Jorge Riti', 'Alejandra Centeno', 'María Toranzo', 'Silvia Bustos', 'Paola Delgadino', 'Natalia Abregú', 'Maria Moyano', 'Ana Quiroga'];
+    <!-- Tabla gastos -->
+    <div class="card">
+      <div class="card-title">📋 Movimientos</div>
+      <div style="overflow-x:auto">
+        <table class="gastos-tabla">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Persona</th>
+              <th>Categoría</th>
+              <th>Tipo</th>
+              <th>Monto</th>
+              <th id="thAcciones" style="display:none">Acc.</th>
+            </tr>
+          </thead>
+          <tbody id="gastosTableBody">
+            <tr><td colspan="6" class="empty-msg">No hay movimientos aún</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-        const dataDefecto = {
-            stands: [
-                { id: 'hamburguesa', nombre: '🍔 Hamburguesa', encargado: '', voluntarios: [], insumos: { 'COMIDA': ['Hamburguesas', 'Pan', 'Papas fritas', 'Lechuga', 'Tomate'], 'ADEREZOS': ['Mostaza', 'Ketchup', 'Mayonesa', 'Salsitas'], 'DESCARTABLES': ['Servilletas', 'Bandejas de cartón', 'Rollo de cocina'], 'UTENSILIOS': ['Cuchillo', 'Tenedor', 'Cuchara', 'Espátula', 'Ensaladeras'], 'UNIFORME': ['Cofia', 'Delantal', 'Guantes'], 'EQUIPAMIENTO': ['Asaderas', 'Mesa', 'Silla', 'Parrilla', 'Gazebo', 'Carbón'], 'CONTROL': ['Planilla de control', 'Caja para ticket', 'Lapicera'], 'DECORACIÓN': ['Mantel', 'Cartel'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura', 'Repasadores'], 'OTROS': ['Encendedor'] } },
-                { id: 'pancho', nombre: '🌭 Pancho', encargado: '', voluntarios: [], insumos: { 'COMIDA': ['Salchicha', 'Pan'], 'ADEREZOS': ['Mostaza', 'Mayonesa', 'Ketchup'], 'DESCARTABLES': ['Servilletas', 'Bandejas de cartón', 'Rollo de cocina'], 'UTENSILIOS': ['Olla', 'Cuchara', 'Tenedor'], 'UNIFORME': ['Cofia', 'Delantal', 'Guantes'], 'EQUIPAMIENTO': ['Mesa', 'Silla', 'Gazebo'], 'CONTROL': ['Planilla de control', 'Caja para ticket', 'Lapicera'], 'DECORACIÓN': ['Mantel'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura', 'Repasadores'], 'OTROS': ['Encendedor', 'Salseras'] } },
-                { id: 'empanada', nombre: '🥟 Empanada', encargado: '', voluntarios: [], insumos: { 'COMIDA': ['Empanadas', 'Limón'], 'DESCARTABLES': ['Servilletas', 'Bandejas de cartón', 'Rollo de cocina'], 'UTENSILIOS': ['Asadera', 'Asaderas chapón'], 'UNIFORME': ['Cofia', 'Delantal', 'Guantes'], 'EQUIPAMIENTO': ['Mesa', 'Silla', 'Gazebo', 'Horno', 'Garrafa'], 'CONTROL': ['Planilla de control', 'Caja para ticket', 'Lapicera'], 'DECORACIÓN': ['Mantel'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura', 'Repasadores'], 'OTROS': ['Encendedor'] } },
-                { id: 'pizza', nombre: '🍕 Pizza', encargado: '', voluntarios: [], insumos: { 'COMIDA': ['Pizza'], 'DESCARTABLES': ['Servilletas', 'Bandejas de cartón', 'Rollo de cocina'], 'UTENSILIOS': ['Asaderas', 'Cortador de pizza', 'Tablas de madera'], 'UNIFORME': ['Cofia', 'Delantal', 'Guantes'], 'EQUIPAMIENTO': ['Mesa', 'Silla', 'Gazebo', 'Horno', 'Garrafa'], 'CONTROL': ['Planilla de control', 'Caja para ticket', 'Lapicera'], 'DECORACIÓN': ['Mantel'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura', 'Repasadores'], 'OTROS': ['Encendedor'] } },
-                { id: 'bebida', nombre: '🥤 Bebida', encargado: '', voluntarios: [], insumos: { 'COMIDA': ['Bebidas'], 'DESCARTABLES': ['Vasos', 'Servilletas', 'Rollo de cocina'], 'UTENSILIOS': ['Balde', 'Sacacorcho'], 'UNIFORME': ['Cofia', 'Delantal', 'Guantes'], 'EQUIPAMIENTO': ['Freezer', 'Hielo', 'Mesa', 'Silla', 'Gazebo'], 'CONTROL': ['Planilla de control', 'Caja para ticket', 'Lapicera'], 'DECORACIÓN': ['Mantel'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura', 'Repasadores'], 'OTROS': ['Encendedor'] } },
-                { id: 'cafe', nombre: '☕ Café', encargado: '', voluntarios: [], insumos: { 'COMIDA': ['Café', 'Té', 'Mate cocido'], 'DESCARTABLES': ['Vasos', 'Servilletas', 'Rollo de cocina'], 'UTENSILIOS': ['Máquina de café', 'Revolvedor'], 'UNIFORME': ['Cofia', 'Delantal', 'Guantes'], 'EQUIPAMIENTO': ['Termos agua caliente', 'Mesa', 'Silla', 'Gazebo'], 'CONTROL': ['Planilla de control', 'Caja para ticket', 'Lapicera'], 'DECORACIÓN': ['Mantel'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura', 'Repasadores'], 'OTROS': ['Encendedor'] } },
-                { id: 'entradas', nombre: '📋 Sector Entradas', encargado: '', voluntarios: [], insumos: { 'CONTROL': ['Planilla de control', 'Lapicera', 'Caja para tickets', 'Talonarios'], 'EQUIPAMIENTO': ['Mesa', 'Silla', 'Gazebo'], 'UNIFORME': ['Delantal', 'Identificativo'], 'DECORACIÓN': ['Cartel de entradas'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura'] } },
-                { id: 'caja', nombre: '💳 Caja', encargado: '', voluntarios: [], insumos: { 'EQUIPAMIENTO': ['Mesa', 'Silla', 'Caja registradora', 'Caja para cobro'], 'CONTROL': ['Cambio en dinero', 'Lapiceras', 'Hojas para anotar', 'Planillas de control'], 'LIMPIEZA': ['Papel de diario', 'Alcohol', 'Tacho de basura', 'Bolsa de basura'] } },
-                { id: 'espectaculos', nombre: '🎭 Espectáculos', encargado: '', voluntarios: [], insumos: { 'CONTROL': ['Control de técnica', 'Timing de artistas', 'Coordinación'] } },
-                { id: 'premiosbingo', nombre: '🎁 Premios y Bingo', encargado: '', voluntarios: [], insumos: { 'DECORACIÓN': ['Mesa', 'Manteles', 'Regalos', 'Objetos decorativos', 'Bolillero', 'Cartones bingo', 'Lápices/Porotos'], 'CONTROL': ['Listado de sponsors', 'Listado de proveedores', 'Listado de juegos'] } },
-                { id: 'folletos', nombre: '📋 Folletos', encargado: '', voluntarios: [], link: 'https://chat.whatsapp.com/IFLtP6QdXtbLq3l60CNG3D', insumos: { 'INFO': ['Descargar folletos del grupo de WhatsApp'] } }
-            ],
-            shows: [{ nombre: 'Ballet El Ceibel', telefono: '', instagram: '' }],
-            links: { hamburguesa: 'https://chat.whatsapp.com/ERgrrSxhj7sAGDZqyg3YOF', pancho: 'https://chat.whatsapp.com/IQEYExT337wKJA2seNgNCo', empanada: 'https://chat.whatsapp.com/CndelWanSCT3dYQT8zxSuU', pizza: 'https://chat.whatsapp.com/IXlhGopTX07JDhIPMmXAVd', bebida: 'https://chat.whatsapp.com/KWIgNX6JkJd49A2Um98KQZ', cafe: 'https://chat.whatsapp.com/KWIgNX6JkJd49A2Um98KQZ', entradas: 'https://chat.whatsapp.com/IFLtP6QdXtbLq3l60CNG3D', caja: 'https://chat.whatsapp.com/IFLtP6QdXtbLq3l60CNG3D', espectaculos: 'https://chat.whatsapp.com/IFLtP6QdXtbLq3l60CNG3D', premiosbingo: 'https://chat.whatsapp.com/Cu1L3ops2hAGtvFksMf0nf', folletos: 'https://chat.whatsapp.com/IFLtP6QdXtbLq3l60CNG3D' },
-            sponsors: [],
-            proveedores: [],
-            gastos: []
-        };
+  <!-- ===== SPONSORS ===== -->
+  <div class="section" id="section-sponsors">
+    <div class="section-title">🤝 Sponsors</div>
+    <div class="card">
+      <div id="sponsorsList"></div>
+      <div id="formSponsor" style="display:none">
+        <div class="divider"></div>
+        <div class="field-label">Nombre</div>
+        <input type="text" class="field-input" id="sponsorNombre" placeholder="Nombre del sponsor">
+        <div class="field-label">Teléfono</div>
+        <input type="text" class="field-input" id="sponsorTel" placeholder="Ej: 381-1234567">
+        <div class="field-label">¿Qué dona?</div>
+        <input type="text" class="field-input" id="sponsorDona" placeholder="Ej: 50 remeras, dinero, etc.">
+        <div class="add-row">
+          <button class="btn btn-success" onclick="addSponsor()">✅ Agregar</button>
+          <button class="btn" style="background:var(--borde)" onclick="document.getElementById('formSponsor').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+      <div id="btnAddSponsor" style="display:none;margin-top:12px">
+        <button class="btn btn-primary" onclick="document.getElementById('formSponsor').style.display='block';this.style.display='none'">➕ Agregar Sponsor</button>
+      </div>
+    </div>
+  </div>
 
-        let data = {};
+  <!-- ===== PROVEEDORES ===== -->
+  <div class="section" id="section-proveedores">
+    <div class="section-title">📦 Proveedores</div>
+    <div class="card">
+      <div id="proveedoresList"></div>
+      <div id="formProveedor" style="display:none">
+        <div class="divider"></div>
+        <div class="field-label">Nombre</div>
+        <input type="text" class="field-input" id="proveedorNombre" placeholder="Nombre del proveedor">
+        <div class="field-label">Teléfono</div>
+        <input type="text" class="field-input" id="proveedorTel" placeholder="Ej: 381-1234567">
+        <div class="field-label">¿Qué compró / provee?</div>
+        <input type="text" class="field-input" id="proveedorProducto" placeholder="Ej: Bebidas, pan, etc.">
+        <div class="add-row">
+          <button class="btn btn-success" onclick="addProveedor()">✅ Agregar</button>
+          <button class="btn" style="background:var(--borde)" onclick="document.getElementById('formProveedor').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+      <div id="btnAddProveedor" style="display:none;margin-top:12px">
+        <button class="btn btn-primary" onclick="document.getElementById('formProveedor').style.display='block';this.style.display='none'">➕ Agregar Proveedor</button>
+      </div>
+    </div>
+  </div>
 
-        // Firebase - Cargar datos
-        function cargarDatos() {
-            return new Promise((resolve) => {
-                const dbRef = firebase.database().ref('pena2026');
-                dbRef.once('value').then((snapshot) => {
-                    if (snapshot.exists()) {
-                        data = snapshot.val();
-                    } else {
-                        data = JSON.parse(JSON.stringify(dataDefecto));
-                    }
-                    
-                    // Listener para cambios en tiempo real
-                    dbRef.on('value', (snapshot) => {
-                        if (snapshot.exists()) {
-                            data = snapshot.val();
-                            render();
-                        }
-                    });
-                    
-                    resolve();
-                });
-            });
+  <!-- ===== VOLUNTARIOS ===== -->
+  <div class="section" id="section-voluntarios">
+    <div class="section-title">👥 Voluntarios</div>
+    <div class="card">
+      <div id="voluntariosList"></div>
+      <div id="formVoluntario" style="display:none">
+        <div class="divider"></div>
+        <div class="field-label">Nombre</div>
+        <input type="text" class="field-input" id="volNombre" placeholder="Nombre">
+        <div class="field-label">Apellido</div>
+        <input type="text" class="field-input" id="volApellido" placeholder="Apellido">
+        <div class="field-label">Teléfono</div>
+        <input type="text" class="field-input" id="volTel" placeholder="Ej: 381-1234567">
+        <div class="add-row">
+          <button class="btn btn-success" onclick="addVoluntarioGeneral()">✅ Agregar</button>
+          <button class="btn" style="background:var(--borde)" onclick="document.getElementById('formVoluntario').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+      <div id="btnAddVoluntario" style="display:none;margin-top:12px">
+        <button class="btn btn-primary" onclick="document.getElementById('formVoluntario').style.display='block';this.style.display='none'">➕ Agregar Voluntario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COMPARTIR ===== -->
+  <div class="section" id="section-compartir">
+    <div class="section-title">📲 Compartir</div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">📱</div>
+      <h3 style="font-family:'Fredoka One',cursive;font-size:1.4rem;margin-bottom:8px">Compartí la agenda</h3>
+      <p style="color:var(--gris);margin-bottom:20px;font-size:0.95rem">Mandá el link por WhatsApp para que todos puedan ver la agenda en tiempo real</p>
+      <div style="background:var(--fondo);border-radius:14px;padding:14px;margin-bottom:16px;word-break:break-all;font-size:0.9rem;font-weight:600" id="urlActual">Cargando URL...</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-whatsapp" onclick="compartirWhatsApp()">📲 Compartir por WhatsApp</button>
+        <button class="btn btn-info" onclick="copiarLink()">📋 Copiar Link</button>
+        <button class="btn" style="background:var(--naranja);color:white" onclick="window.print()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- SYNC BAR -->
+<div class="sync-bar" id="syncBar">
+  <div class="sync-dot"></div>
+  <span id="syncText">Conectando...</span>
+</div>
+
+<script>
+// =============================================
+// ESTADO GLOBAL
+// =============================================
+let isAdmin = false;
+let appData = {
+  stands: {},
+  shows: [],
+  gastos: [],
+  sponsors: [],
+  proveedores: []
+};
+let gastosChart = null;
+
+const INSUMOS_CATEGORIAS = {
+  "🍽️ Gastronomía": ["Empanadas","Locro","Sándwiches","Choripanes","Hamburguesas","Postres","Pan","Condimentos","Limón","Servilletas"],
+  "🥤 Bebidas": ["Gaseosas","Agua","Cerveza","Vino","Hielo","Vasos","Conservadoras","Freezers","Destapadores","Sacacorchos"],
+  "🍳 Insumos de Cocina": ["Garrafas","Hornos","Ollas","Asaderas","Parrillas","Espátulas","Cucharones","Cuchillos","Tablas","Bandejas","Guantes","Repasadores"],
+  "🪑 Mobiliario": ["Mesas","Sillas","Bancos","Manteles","Barras","Mesas de apoyo","Escenarios"],
+  "🏗️ Estructuras": ["Gazebos","Carpas","Toldos","Cerramientos","Vallados","Tarimas"],
+  "🔊 Sonido e Iluminación": ["Consola","Parlantes","Micrófonos","Luces","Reflectores","Generador eléctrico","Cables y extensiones"],
+  "🎨 Decoración": ["Carteles","Banderines","Centros de mesa","Banners","Telones","Señalética"],
+  "🧹 Limpieza": ["Escobas","Trapeadores","Baldes","Escurridores","Bolsas de residuos","Tachos de basura","Productos de limpieza","Papel higiénico","Jabón"],
+  "🚻 Baños": ["Baños químicos","Papel higiénico","Jabón","Toallas de papel","Aromatizantes"],
+  "👥 Personal": ["Cocineros","Asadores","Mozos","Cajeros","Personal de limpieza","Seguridad","Coordinadores"],
+  "💵 Caja y Ventas": ["Entradas","Pulseras","Talonarios","Caja de dinero","Cambio","POS o QR","Planillas de control"],
+  "🎤 Espectáculos": ["Grupos folclóricos","Cantantes","Ballet","Animador","Presentador"],
+  "🎰 Sorteos y Entretenimiento": ["Bingo","Rifas","Premios","Regalos","Urnas","Números"],
+  "🚨 Seguridad y Emergencias": ["Botiquín","Matafuegos","Linternas","Señalización de emergencia","Teléfonos de contacto"],
+  "🚛 Logística y Transporte": ["Carga y descarga","Vehículos","Combustible","Depósito","Almacenamiento"],
+  "📢 Difusión y Publicidad": ["Redes sociales","Flyers","Afiches","Banners","Prensa","Fotografía y video"]
+};
+
+const STANDS_CONFIG = [
+  { id: 'hamburguesa', nombre: 'Hamburguesa', emoji: '🍔', color: '#fff3e0', link: 'https://chat.whatsapp.com/ERgrrSxhj7sAGDZqyg3YOF', insumos: {
+    '🍽️ Gastronomía': ['Hamburguesas','Pan','Condimentos','Limón','Servilletas'],
+    '🥤 Bebidas': ['Gaseosas','Agua','Vasos'],
+    '🍳 Insumos de Cocina': ['Parrillas','Espátulas','Tablas','Bandejas','Guantes','Repasadores'],
+    '🧹 Limpieza': ['Bolsas de residuos','Productos de limpieza']
+  }},
+  { id: 'pancho', nombre: 'Pancho', emoji: '🌭', color: '#fce4ec', link: 'https://chat.whatsapp.com/IQEYExT337wKJA2seNgNCo', insumos: {
+    '🍽️ Gastronomía': ['Choripanes','Sándwiches','Pan','Condimentos','Limón','Servilletas'],
+    '🍳 Insumos de Cocina': ['Parrillas','Espátulas','Tablas','Guantes','Repasadores'],
+    '🧹 Limpieza': ['Bolsas de residuos','Productos de limpieza']
+  }},
+  { id: 'empanada', nombre: 'Empanada', emoji: '🥟', color: '#f3e5f5', link: 'https://chat.whatsapp.com/CndelWanSCT3dYQT8zxSuU', insumos: {
+    '🍽️ Gastronomía': ['Empanadas','Locro','Condimentos','Limón','Servilletas'],
+    '🍳 Insumos de Cocina': ['Hornos','Ollas','Asaderas','Cucharones','Bandejas','Guantes','Repasadores'],
+    '🧹 Limpieza': ['Bolsas de residuos','Productos de limpieza']
+  }},
+  { id: 'pizza', nombre: 'Pizza', emoji: '🍕', color: '#e8f5e9', link: 'https://chat.whatsapp.com/IXlhGopTX07JDhIPMmXAVd', insumos: {
+    '🍽️ Gastronomía': ['Postres','Pan','Condimentos','Servilletas'],
+    '🍳 Insumos de Cocina': ['Hornos','Asaderas','Bandejas','Cuchillos','Tablas','Guantes','Repasadores'],
+    '🧹 Limpieza': ['Bolsas de residuos','Productos de limpieza']
+  }},
+  { id: 'bebida', nombre: 'Bebida', emoji: '🥤', color: '#e3f2fd', link: 'https://chat.whatsapp.com/KWIgNX6JkJd49A2Um98KQZ', insumos: {
+    '🥤 Bebidas': ['Gaseosas','Agua','Cerveza','Vino','Hielo','Vasos','Conservadoras','Freezers','Destapadores','Sacacorchos'],
+    '🧹 Limpieza': ['Bolsas de residuos']
+  }},
+  { id: 'cafe', nombre: 'Café', emoji: '☕', color: '#efebe9', link: '', insumos: {
+    '🍽️ Gastronomía': ['Postres','Pan','Servilletas'],
+    '🥤 Bebidas': ['Agua','Vasos'],
+    '🍳 Insumos de Cocina': ['Garrafas','Ollas','Cucharones','Bandejas','Guantes','Repasadores'],
+    '🧹 Limpieza': ['Bolsas de residuos','Productos de limpieza']
+  }},
+  { id: 'entradas', nombre: 'Entradas', emoji: '🎟️', color: '#fff8e1', link: 'https://chat.whatsapp.com/CL73NDmr0Gw0pbKUqJQxPU', insumos: {
+    '💵 Caja y Ventas': ['Entradas','Pulseras','Talonarios','Caja de dinero','Cambio','POS o QR','Planillas de control'],
+    '👥 Personal': ['Cajeros','Coordinadores']
+  }},
+  { id: 'caja', nombre: 'Caja', emoji: '💵', color: '#e8f5e9', link: 'https://chat.whatsapp.com/FytCS7p2B3UBew3maJy0DJ', insumos: {
+    '💵 Caja y Ventas': ['Caja de dinero','Cambio','POS o QR','Planillas de control','Talonarios'],
+    '👥 Personal': ['Cajeros','Coordinadores'],
+    '🚨 Seguridad y Emergencias': ['Botiquín','Linternas','Teléfonos de contacto']
+  }},
+  { id: 'espectaculos', nombre: 'Espectáculos', emoji: '🎤', color: '#fce4ec', link: 'https://chat.whatsapp.com/GIvYXXiCJaMLT3QP0WR5kK', insumos: {
+    '🎤 Espectáculos': ['Grupos folclóricos','Cantantes','Ballet','Animador','Presentador'],
+    '🔊 Sonido e Iluminación': ['Consola','Parlantes','Micrófonos','Luces','Reflectores','Generador eléctrico','Cables y extensiones'],
+    '🪑 Mobiliario': ['Escenarios','Tarimas','Sillas'],
+    '🎨 Decoración': ['Carteles','Banners','Telones','Señalética']
+  }},
+  { id: 'premios', nombre: 'Premios y Bingo', emoji: '🎁', color: '#f3e5f5', link: 'https://chat.whatsapp.com/Cu1L3ops2hAGtvFksMf0nf', insumos: {
+    '🎰 Sorteos y Entretenimiento': ['Bingo','Rifas','Premios','Regalos','Urnas','Números'],
+    '👥 Personal': ['Animador','Coordinadores']
+  }},
+  { id: 'folletos', nombre: 'Folletos', emoji: '📋', color: '#e1f5fe', link: 'https://chat.whatsapp.com/IFLtP6QdXtbLq3l60CNG3D', insumos: {
+    '📢 Difusión y Publicidad': ['Redes sociales','Flyers','Afiches','Banners','Prensa','Fotografía y video'],
+    '🎨 Decoración': ['Carteles','Banderines','Señalética']
+  }}
+];
+
+// =============================================
+// LOGIN
+// =============================================
+function loginAdmin() {
+  const pass = document.getElementById('passInput').value;
+  if (pass === '303') {
+    isAdmin = true;
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('adminBadge').style.display = 'inline-block';
+    enableAdminControls();
+  } else {
+    document.getElementById('passError').style.display = 'block';
+    document.getElementById('passInput').value = '';
+    setTimeout(() => document.getElementById('passError').style.display = 'none', 2000);
+  }
+}
+
+function loginVoluntario() {
+  isAdmin = false;
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+
+document.getElementById('passInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') loginAdmin();
+});
+
+function enableAdminControls() {
+  // Mostrar botones de admin
+  document.getElementById('btnAddShow').style.display = 'block';
+  document.getElementById('btnAddSponsor').style.display = 'block';
+  document.getElementById('btnAddProveedor').style.display = 'block';
+  document.getElementById('btnAddVoluntario').style.display = 'block';
+  document.getElementById('btnNuevoGasto').style.display = 'block';
+  document.getElementById('thAcciones').style.display = 'table-cell';
+  // Habilitar inputs
+  // Re-renderizar todo con permisos de admin activos
+  renderAll();
+}
+
+// =============================================
+// FIREBASE
+// =============================================
+function initFirebase() {
+  setSyncText('Conectando a Firebase...');
+
+  const db = window.db;
+  const dbRef = window.dbRef;
+  const dbOnValue = window.dbOnValue;
+
+  dbOnValue(dbRef(db, 'pena2026'), (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      appData = { ...appData, ...data };
+      // Compatibilidad: asegurar arrays
+      if (!appData.shows) appData.shows = [];
+      if (!appData.gastos) appData.gastos = [];
+      if (!appData.sponsors) appData.sponsors = [];
+      if (!appData.proveedores) appData.proveedores = [];
+      if (!appData.stands) appData.stands = {};
+    }
+    renderAll();
+    setSyncText('🟢 Sincronizado');
+  });
+}
+
+function saveToFirebase() {
+  if (!window.firebaseReady) return;
+  const db = window.db;
+  const dbRef = window.dbRef;
+  const dbSet = window.dbSet;
+  dbSet(dbRef(db, 'pena2026'), appData)
+    .then(() => setSyncText('✅ Guardado'))
+    .catch(() => setSyncText('⚠️ Error al guardar'));
+}
+
+function setSyncText(t) {
+  document.getElementById('syncText').textContent = t;
+}
+
+// =============================================
+// RENDERS
+// =============================================
+function renderAll() {
+  renderStands();
+  renderShows();
+  renderGastos();
+  renderSponsors();
+  renderProveedores();
+  renderVoluntariosGenerales();
+  document.getElementById('urlActual').textContent = window.location.href;
+}
+
+// --- STANDS ---
+function renderStands() {
+  const grid = document.getElementById('standsGrid');
+  grid.innerHTML = '';
+
+  STANDS_CONFIG.forEach(cfg => {
+    const standData = appData.stands[cfg.id] || { encargado: '', voluntarios: [], link: cfg.link || '', insumos: {} };
+    if (!standData.link && cfg.link) standData.link = cfg.link;
+
+    const card = document.createElement('div');
+    card.className = 'stand-card';
+
+    const voluntariosHTML = (standData.voluntarios || []).map((v, i) =>
+      `<div class="voluntario-tag">${v}${isAdmin ? `<span class="remove-btn" onclick="removeVoluntario('${cfg.id}',${i})">×</span>` : ''}</div>`
+    ).join('');
+
+    const insumosCats = cfg.insumos || {};
+    const totalInsumos = Object.values(insumosCats).flat().length;
+    const extraInsumos = (standData.insumosExtra || []);
+
+    const insumosHTML = Object.keys(insumosCats).map(cat =>
+      `<div class="insumo-categoria">${cat}</div>` +
+      insumosCats[cat].map(ins => {
+        const key = ins.replace(/[^a-zA-Z0-9]/g,'_');
+        const checked = (standData.insumos || {})[key] || false;
+        return `<div class="insumo-item">
+          <input type="checkbox" class="insumo-check" ${checked ? 'checked' : ''} ${isAdmin ? '' : 'disabled'}
+            onchange="toggleInsumo('${cfg.id}','${key}',this.checked)">
+          <span class="insumo-text ${checked ? 'checked' : ''}">${ins}</span>
+        </div>`;
+      }).join('')
+    ).join('') +
+    (extraInsumos.length ? `<div class="insumo-categoria">➕ Agregados</div>` +
+      extraInsumos.map((ins, i) => {
+        const key = 'extra_' + i;
+        const checked = (standData.insumos || {})[key] || false;
+        return `<div class="insumo-item">
+          <input type="checkbox" class="insumo-check" ${checked ? 'checked' : ''} ${isAdmin ? '' : 'disabled'}
+            onchange="toggleInsumo('${cfg.id}','${key}',this.checked)">
+          <span class="insumo-text ${checked ? 'checked' : ''}">${ins}</span>
+          ${isAdmin ? `<span style="cursor:pointer;color:var(--rojo);font-weight:900;margin-left:6px" onclick="removeInsumoExtra('${cfg.id}',${i})">×</span>` : ''}
+        </div>`;
+      }).join('') : '') +
+    (isAdmin ? `<div style="margin-top:8px;display:flex;gap:6px">
+      <input type="text" class="field-input" id="newIns-${cfg.id}" placeholder="Agregar insumo..." style="flex:1;margin:0;font-size:0.85rem;padding:7px 10px">
+      <button class="btn btn-success btn-small" onclick="addInsumoExtra('${cfg.id}')">➕</button>
+    </div>` : '');
+
+    const linkHTML = standData.link
+      ? `<div class="whatsapp-link">📲 <a href="${standData.link}" target="_blank">Grupo WhatsApp</a>
+          ${isAdmin ? `<button class="btn btn-small" style="background:#ffebee;color:var(--rojo)" onclick="editLink('${cfg.id}')">✏️</button>` : ''}
+        </div>`
+      : (isAdmin ? `<button class="btn btn-small btn-whatsapp" onclick="editLink('${cfg.id}')">📲 Agregar link WhatsApp</button>` : '');
+
+    card.innerHTML = `
+      <div class="stand-header">
+        <div class="stand-emoji" style="background:${cfg.color}">${cfg.emoji}</div>
+        <div>
+          <div class="stand-name">${cfg.nombre}</div>
+          <div class="stand-sub">Stand</div>
+        </div>
+      </div>
+
+      <div class="field-label">Encargado/a</div>
+      <input type="text" class="field-input admin-only" value="${standData.encargado || ''}"
+        placeholder="Sin asignar" ${isAdmin ? '' : 'disabled'}
+        onchange="updateEncargado('${cfg.id}',this.value)">
+
+      <div class="field-label">Voluntarios</div>
+      <div class="voluntarios-list" id="vols-${cfg.id}">${voluntariosHTML || '<span style="color:var(--gris);font-size:0.85rem">Sin voluntarios</span>'}</div>
+      ${isAdmin ? `<div class="add-row">
+        <input type="text" class="field-input" id="newVol-${cfg.id}" placeholder="Nombre voluntario" style="flex:1;margin:0">
+        <button class="btn btn-success btn-small" onclick="addVoluntario('${cfg.id}')">➕</button>
+      </div>` : ''}
+
+      <div class="divider"></div>
+      <details>
+        <summary style="cursor:pointer;font-weight:700;font-size:0.9rem;padding:6px 0">📦 Insumos (${totalInsumos + extraInsumos.length})</summary>
+        <div class="insumos-section">${insumosHTML}</div>
+      </details>
+
+      ${linkHTML}
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+function addInsumoExtra(standId) {
+  const input = document.getElementById('newIns-' + standId);
+  const nombre = input.value.trim();
+  if (!nombre) return;
+  if (!appData.stands[standId]) appData.stands[standId] = {};
+  if (!appData.stands[standId].insumosExtra) appData.stands[standId].insumosExtra = [];
+  appData.stands[standId].insumosExtra.push(nombre);
+  input.value = '';
+  saveToFirebase();
+  renderStands();
+}
+
+function removeInsumoExtra(standId, idx) {
+  appData.stands[standId].insumosExtra.splice(idx, 1);
+  saveToFirebase();
+  renderStands();
+}
+
+function updateEncargado(standId, value) {
+  if (!appData.stands[standId]) appData.stands[standId] = {};
+  appData.stands[standId].encargado = value;
+  saveToFirebase();
+}
+
+function addVoluntario(standId) {
+  const input = document.getElementById(`newVol-${standId}`);
+  const nombre = input.value.trim();
+  if (!nombre) return;
+  if (!appData.stands[standId]) appData.stands[standId] = {};
+  if (!appData.stands[standId].voluntarios) appData.stands[standId].voluntarios = [];
+  appData.stands[standId].voluntarios.push(nombre);
+  input.value = '';
+  saveToFirebase();
+  renderStands();
+}
+
+function removeVoluntario(standId, idx) {
+  appData.stands[standId].voluntarios.splice(idx, 1);
+  saveToFirebase();
+  renderStands();
+}
+
+function toggleInsumo(standId, insumo, checked) {
+  if (!appData.stands[standId]) appData.stands[standId] = {};
+  if (!appData.stands[standId].insumos) appData.stands[standId].insumos = {};
+  appData.stands[standId].insumos[insumo] = checked;
+  saveToFirebase();
+}
+
+function editLink(standId) {
+  const link = prompt('Ingresá el link del grupo de WhatsApp:', appData.stands[standId]?.link || '');
+  if (link !== null) {
+    if (!appData.stands[standId]) appData.stands[standId] = {};
+    appData.stands[standId].link = link;
+    saveToFirebase();
+    renderStands();
+  }
+}
+
+// --- SHOWS ---
+function renderShows() {
+  const list = document.getElementById('showsList');
+  if (!appData.shows || appData.shows.length === 0) {
+    list.innerHTML = '<div class="empty-msg">No hay shows cargados aún</div>';
+    return;
+  }
+  list.innerHTML = appData.shows.map((show, i) => `
+    <div class="show-item">
+      <div class="show-num">${i + 1}</div>
+      <div class="show-info">
+        <div class="show-nombre">${show.nombre}</div>
+        <div class="show-hora">⏰ ${show.hora}</div>
+      </div>
+      ${isAdmin ? `<button class="btn btn-danger btn-small" onclick="removeShow(${i})">🗑️</button>` : ''}
+    </div>
+  `).join('');
+}
+
+function addShow() {
+  const nombre = document.getElementById('showNombre').value.trim();
+  const hora = document.getElementById('showHora').value.trim();
+  if (!nombre) return;
+  if (!appData.shows) appData.shows = [];
+  appData.shows.push({ nombre, hora: hora || 'Sin horario' });
+  document.getElementById('showNombre').value = '';
+  document.getElementById('showHora').value = '';
+  document.getElementById('addShowForm').style.display = 'none';
+  document.getElementById('btnAddShow').style.display = 'block';
+  saveToFirebase();
+  renderShows();
+}
+
+function removeShow(i) {
+  appData.shows.splice(i, 1);
+  saveToFirebase();
+  renderShows();
+}
+
+// --- GASTOS ---
+function renderGastos() {
+  const gastos = appData.gastos || [];
+
+  let entrada = 0, salida = 0;
+  const catTotales = {};
+
+  gastos.forEach(g => {
+    const monto = parseFloat(g.monto) || 0;
+    if (g.tipo === 'Gasto') salida += monto;
+    else entrada += monto;
+    catTotales[g.categoria] = (catTotales[g.categoria] || 0) + monto;
+  });
+
+  const diferencia = entrada - salida;
+
+  document.getElementById('totalEntrada').textContent = '$' + entrada.toLocaleString('es-AR');
+  document.getElementById('totalSalida').textContent = '$' + salida.toLocaleString('es-AR');
+  document.getElementById('totalDiferencia').textContent = (diferencia >= 0 ? '+' : '') + '$' + diferencia.toLocaleString('es-AR');
+
+  // Gráfico
+  const chartColors = ['#e63946','#ffd60a','#2dc653','#0096c7','#ff6b35','#7b2d8b','#06d6a0','#f72585','#4361ee','#fb5607','#3a86ff','#8338ec'];
+  const labels = Object.keys(catTotales);
+  const valores = Object.values(catTotales);
+
+  if (gastosChart) gastosChart.destroy();
+  if (labels.length > 0) {
+    const ctx = document.getElementById('gastosChart').getContext('2d');
+    gastosChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: valores,
+          backgroundColor: chartColors.slice(0, labels.length),
+          borderWidth: 3,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { family: 'Nunito', size: 11 }, padding: 12 } }
         }
+      }
+    });
+  }
 
-        // Firebase - Guardar datos
-        function guardarDatos() {
-            firebase.database().ref('pena2026').set(data).catch(error => {
-                console.error('Error guardando datos:', error);
-            });
-        }
+  // Tabla
+  const tbody = document.getElementById('gastosTableBody');
+  if (gastos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-msg">No hay movimientos aún</td></tr>';
+    return;
+  }
 
-        function login(){
-            const pass = document.getElementById('passwordInput').value;
-            if(pass === '303'){
-                isAdmin = true;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('adminBar').classList.remove('hidden');
-                document.getElementById('addShowBtn').classList.remove('hidden');
-                document.getElementById('addSponsorBtn').classList.remove('hidden');
-                document.getElementById('addProveedorBtn').classList.remove('hidden');
-                document.getElementById('adminGastosBtn').classList.remove('hidden');
-                render();
-            } else {
-                alert('Contraseña incorrecta');
-            }
-        }
+  tbody.innerHTML = [...gastos].reverse().map((g, i) => {
+    const realI = gastos.length - 1 - i;
+    const tipoClass = g.tipo === 'Gasto' ? 'tipo-gasto' : g.tipo === 'Donacion' ? 'tipo-donacion' : 'tipo-ingreso';
+    const tipoLabel = g.tipo === 'Gasto' ? '💸 Gasto' : g.tipo === 'Donacion' ? '🎁 Donación' : '💚 Ingreso';
+    return `<tr>
+      <td><strong>${g.concepto}</strong></td>
+      <td>${g.persona}</td>
+      <td style="font-size:0.8rem">${g.categoria}</td>
+      <td><span class="tipo-badge ${tipoClass}">${tipoLabel}</span></td>
+      <td><strong>$${parseFloat(g.monto).toLocaleString('es-AR')}</strong></td>
+      ${isAdmin ? `<td><button class="btn btn-danger btn-small" onclick="removeGasto(${realI})">🗑️</button></td>` : '<td></td>'}
+    </tr>`;
+  }).join('');
+}
 
-        function loginAsVoluntario(){
-            isAdmin = false;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('adminBar').classList.add('hidden');
-            document.getElementById('addShowBtn').classList.add('hidden');
-            document.getElementById('addSponsorBtn').classList.add('hidden');
-            document.getElementById('addProveedorBtn').classList.add('hidden');
-            document.getElementById('adminGastosBtn').classList.add('hidden');
-            render();
-        }
+function checkCategoriaPersonalizada(sel) {
+  const input = document.getElementById('categoriaNueva');
+  if (sel.value === 'otra') {
+    input.style.display = 'block';
+    input.focus();
+  } else {
+    input.style.display = 'none';
+    input.value = '';
+  }
+}
 
-        function logout(){ isAdmin=false; document.getElementById('mainApp').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
+function agregarGasto() {
+  const concepto = document.getElementById('gastoConcepto').value.trim();
+  const persona = document.getElementById('gastoPersona').value.trim();
+  const catSelect = document.getElementById('gastoCategoria');
+  const catNueva = document.getElementById('categoriaNueva').value.trim();
+  const categoria = catSelect.value === 'otra' ? (catNueva || 'Otra') : catSelect.value;
+  const tipo = document.getElementById('gastoTipo').value;
+  const monto = document.getElementById('gastoMonto').value;
 
-        function compartirWhatsApp(){
-            const link = 'https://pena-2026.netlify.app';
-            const mensaje = '🍺 ¡Hola! Les comparto la AGENDA DIGITAL de la PEÑA 2026 🎉\n\nDía: Domingo 7 de junio\nHorario: 13:00 a 18:00 hs\n\n👉 ' + link + '\n\n¡Te esperamos! 🎉';
-            window.open('https://wa.me/?text=' + encodeURIComponent(mensaje), '_blank');
-        }
+  if (!concepto || !monto) { alert('Completá concepto y monto'); return; }
 
-        function showTab(tabName){
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-            if(tabName === 'gastos') setTimeout(actualizarGrafico, 200);
-        }
+  if (!appData.gastos) appData.gastos = [];
+  appData.gastos.push({ concepto, persona, categoria, tipo, monto, fecha: new Date().toLocaleDateString('es-AR') });
 
-        function showStandTab(standId){
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('stand_' + standId).classList.add('active');
-            event.target.classList.add('active');
-        }
+  document.getElementById('gastoConcepto').value = '';
+  document.getElementById('gastoPersona').value = '';
+  document.getElementById('gastoMonto').value = '';
+  document.getElementById('categoriaNueva').value = '';
+  document.getElementById('categoriaNueva').style.display = 'none';
+  document.getElementById('gastoCategoria').selectedIndex = 0;
+  document.getElementById('formGasto').style.display = 'none';
+  document.getElementById('btnNuevoGasto').style.display = 'block';
 
-        function render(){
-            renderStandTabs();
-            renderStands();
-            renderShows();
-            renderLinks();
-            renderSponsors();
-            renderProveedores();
-            renderGastos();
-        }
+  saveToFirebase();
+  renderGastos();
+}
 
-        function renderStandTabs(){
-            let html = '';
-            data.stands.forEach(stand => {
-                html += '<button class="tab-btn ' + (stand === data.stands[0] ? 'active' : '') + '" onclick="showStandTab(\'' + stand.id + '\')">' + stand.nombre + '</button>';
-            });
-            document.getElementById('standsTabButtons').innerHTML = html;
-        }
+function removeGasto(i) {
+  if (!confirm('¿Eliminar este movimiento?')) return;
+  appData.gastos.splice(i, 1);
+  saveToFirebase();
+  renderGastos();
+}
 
-        function renderStands(){
-            let html = '';
-            data.stands.forEach((stand, index) => {
-                html += '<div id="stand_' + stand.id + '" class="section ' + (index === 0 ? 'active' : '') + '"><div class="section-title">' + stand.nombre + '</div><div class="stand-card"><div class="stand-info"><label>👤 Encargado:</label>' + (isAdmin ? '<input type="text" value="' + stand.encargado + '" onchange="data.stands.find(s=>s.id==\'' + stand.id + '\').encargado=this.value; guardarDatos();\">' : '<strong>' + (stand.encargado || 'Sin asignar') + '</strong>') + '</div><div class="stand-info"><label>👥 Voluntarios:</label><div class="voluntario-list">' + (stand.voluntarios.length > 0 ? stand.voluntarios.map((v, i) => '<div class="voluntario-item"><span>' + v + '</span>' + (isAdmin ? '<button onclick="eliminarVoluntario(\'' + stand.id + '\', ' + i + ')">Eliminar</button>' : '') + '</div>').join('') : '<div style="color:#999;padding:10px;">Sin voluntarios</div>') + '</div>' + (isAdmin ? '<div class="add-voluntario-group"><select id="sel_' + stand.id + '" onchange="if(this.value) agregarVoluntario(\'' + stand.id + '\', this.value); this.value=\'\'; "><option value="">+ Seleccionar</option>' + voluntariosBase.map(v => '<option value="' + v + '">' + v + '</option>').join('') + '</select><div style="display:grid;grid-template-columns:1fr auto;gap:5px;"><input type="text" id="new_' + stand.id + '" placeholder="Nuevo nombre"><button onclick="agregarVoluntarioNuevo(\'' + stand.id + '\')">Agregar</button></div></div>' : '') + '</div>';
-                
-                if(stand.link){
-                    html += '<div class="stand-info"><a href="' + stand.link + '" target="_blank" class="link-button">📱 WhatsApp</a></div>';
-                } else {
-                    html += '<div class="insumos-section">';
-                    Object.entries(stand.insumos).forEach(([cat, items]) => {
-                        html += '<div class="insumo-categoria"><div class="insumo-titulo">' + cat + '</div><div class="insumo-items">' + items.map(item => '<div class="insumo-item">✓ ' + item + '</div>').join('') + '</div></div>';
-                    });
-                    html += '</div>';
-                }
-                html += '</div></div>';
-            });
-            document.getElementById('standsContainer').innerHTML = html;
-        }
+// --- SPONSORS ---
+function renderSponsors() {
+  const list = document.getElementById('sponsorsList');
+  if (!appData.sponsors || appData.sponsors.length === 0) {
+    list.innerHTML = '<div class="empty-msg">No hay sponsors cargados</div>';
+    return;
+  }
+  list.innerHTML = appData.sponsors.map((s, i) => `
+    <div class="contacto-card">
+      <div class="contacto-avatar" style="background:#fff3e0">🤝</div>
+      <div class="contacto-info">
+        <div class="contacto-nombre">${s.nombre}</div>
+        <div class="contacto-tel">📞 ${s.tel}</div>
+        <div class="contacto-detalle">🎁 ${s.dona}</div>
+      </div>
+      ${isAdmin ? `<button class="btn btn-danger btn-small" onclick="removeSponsor(${i})">🗑️</button>` : ''}
+    </div>
+  `).join('');
+}
 
-        function agregarVoluntario(standId, voluntario){
-            const stand = data.stands.find(s => s.id === standId);
-            if(stand && voluntario && !stand.voluntarios.includes(voluntario)){
-                stand.voluntarios.push(voluntario);
-                guardarDatos();
-            }
-        }
+function addSponsor() {
+  const nombre = document.getElementById('sponsorNombre').value.trim();
+  const tel = document.getElementById('sponsorTel').value.trim();
+  const dona = document.getElementById('sponsorDona').value.trim();
+  if (!nombre) return;
+  if (!appData.sponsors) appData.sponsors = [];
+  appData.sponsors.push({ nombre, tel, dona });
+  document.getElementById('sponsorNombre').value = '';
+  document.getElementById('sponsorTel').value = '';
+  document.getElementById('sponsorDona').value = '';
+  document.getElementById('formSponsor').style.display = 'none';
+  document.getElementById('btnAddSponsor').style.display = 'block';
+  saveToFirebase();
+  renderSponsors();
+}
 
-        function agregarVoluntarioNuevo(standId){
-            const input = document.getElementById('new_' + standId);
-            const voluntario = input.value.trim();
-            if(voluntario){
-                agregarVoluntario(standId, voluntario);
-                input.value = '';
-            }
-        }
+function removeSponsor(i) {
+  appData.sponsors.splice(i, 1);
+  saveToFirebase();
+  renderSponsors();
+}
 
-        function eliminarVoluntario(standId, index){
-            const stand = data.stands.find(s => s.id === standId);
-            if(stand){
-                stand.voluntarios.splice(index, 1);
-                guardarDatos();
-            }
-        }
+// --- PROVEEDORES ---
+function renderProveedores() {
+  const list = document.getElementById('proveedoresList');
+  if (!appData.proveedores || appData.proveedores.length === 0) {
+    list.innerHTML = '<div class="empty-msg">No hay proveedores cargados</div>';
+    return;
+  }
+  list.innerHTML = appData.proveedores.map((p, i) => `
+    <div class="contacto-card">
+      <div class="contacto-avatar" style="background:#e3f2fd">📦</div>
+      <div class="contacto-info">
+        <div class="contacto-nombre">${p.nombre}</div>
+        <div class="contacto-tel">📞 ${p.tel}</div>
+        <div class="contacto-detalle">🛒 ${p.producto}</div>
+      </div>
+      ${isAdmin ? `<button class="btn btn-danger btn-small" onclick="removeProveedor(${i})">🗑️</button>` : ''}
+    </div>
+  `).join('');
+}
 
-        function renderShows(){
-            let html = data.shows.map((s,i) => '<div class="sponsor-card">' + (isAdmin ? '<input type="text" value="' + s.nombre + '" onchange="data.shows[' + i + '].nombre=this.value; guardarDatos();" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><input type="text" value="' + s.telefono + '" onchange="data.shows[' + i + '].telefono=this.value; guardarDatos();" placeholder="Teléfono" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><input type="text" value="' + s.instagram + '" onchange="data.shows[' + i + '].instagram=this.value; guardarDatos();" placeholder="Instagram" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><button onclick="data.shows.splice(' + i + ',1);guardarDatos()" style="background:#d32f2f;color:white;padding:5px 10px;border:none;border-radius:4px;cursor:pointer;width:100%">Eliminar</button>' : '<strong>' + s.nombre + '</strong><br>📞 ' + s.telefono + '<br>📸 ' + s.instagram) + '</div>').join('');
-            document.getElementById('showsList').innerHTML = html;
-        }
+function addProveedor() {
+  const nombre = document.getElementById('proveedorNombre').value.trim();
+  const tel = document.getElementById('proveedorTel').value.trim();
+  const producto = document.getElementById('proveedorProducto').value.trim();
+  if (!nombre) return;
+  if (!appData.proveedores) appData.proveedores = [];
+  appData.proveedores.push({ nombre, tel, producto });
+  document.getElementById('proveedorNombre').value = '';
+  document.getElementById('proveedorTel').value = '';
+  document.getElementById('proveedorProducto').value = '';
+  document.getElementById('formProveedor').style.display = 'none';
+  document.getElementById('btnAddProveedor').style.display = 'block';
+  document.getElementById('btnAddVoluntario').style.display = 'block';
+  saveToFirebase();
+  renderProveedores();
+}
 
-        function renderLinks(){
-            let html = '<div style="display:grid;gap:10px;">';
-            Object.entries(data.links).forEach(([stand, link]) => {
-                const standData = data.stands.find(s => s.id === stand);
-                html += '<div class="sponsor-card"><strong>' + (standData?.nombre || stand) + '</strong><br><a href="' + link + '" target="_blank" class="link-button">📱 Grupo</a></div>';
-            });
-            html += '</div>';
-            document.getElementById('linksList').innerHTML = html;
-        }
+function removeProveedor(i) {
+  appData.proveedores.splice(i, 1);
+  saveToFirebase();
+  renderProveedores();
+}
 
-        function renderSponsors(){
-            let html = data.sponsors.map((s,i) => '<div class="sponsor-card">' + (isAdmin ? '<input type="text" value="' + s.nombre + '" onchange="data.sponsors[' + i + '].nombre=this.value; guardarDatos();" placeholder="Nombre" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><input type="text" value="' + s.telefono + '" onchange="data.sponsors[' + i + '].telefono=this.value; guardarDatos();" placeholder="Teléfono" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><input type="text" value="' + s.dona + '" onchange="data.sponsors[' + i + '].dona=this.value; guardarDatos();" placeholder="¿Qué dona?" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><button onclick="data.sponsors.splice(' + i + ',1);guardarDatos()" style="background:#d32f2f;color:white;padding:5px 10px;border:none;border-radius:4px;cursor:pointer;width:100%">Eliminar</button>' : '<strong>' + s.nombre + '</strong><br>📞 ' + s.telefono + '<br>🎁 ' + s.dona) + '</div>').join('');
-            document.getElementById('sponsorsList').innerHTML = html;
-        }
+// =============================================
+// NAVEGACIÓN
+// =============================================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
 
-        function renderProveedores(){
-            let html = data.proveedores.map((p,i) => '<div class="sponsor-card">' + (isAdmin ? '<input type="text" value="' + p.nombre + '" onchange="data.proveedores[' + i + '].nombre=this.value; guardarDatos();" placeholder="Nombre" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><input type="text" value="' + p.telefono + '" onchange="data.proveedores[' + i + '].telefono=this.value; guardarDatos();" placeholder="Teléfono" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><input type="text" value="' + p.compro + '" onchange="data.proveedores[' + i + '].compro=this.value; guardarDatos();" placeholder="¿Qué compró?" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:4px;"><button onclick="data.proveedores.splice(' + i + ',1);guardarDatos()" style="background:#d32f2f;color:white;padding:5px 10px;border:none;border-radius:4px;cursor:pointer;width:100%">Eliminar</button>' : '<strong>' + p.nombre + '</strong><br>📞 ' + p.telefono + '<br>📦 ' + p.compro) + '</div>').join('');
-            document.getElementById('proveedoresList').innerHTML = html;
-        }
 
-        function renderGastos(){
-            let totalGastos = 0, totalDonaciones = 0, totalIngresos = 0;
-            data.gastos.forEach(g => {
-                if(g.tipo === 'Gasto') totalGastos += parseFloat(g.monto) || 0;
-                else if(g.tipo === 'Donación') totalDonaciones += parseFloat(g.monto) || 0;
-                else if(g.tipo === 'Ingreso') totalIngresos += parseFloat(g.monto) || 0;
-            });
+// =============================================
+// VOLUNTARIOS GENERALES
+// =============================================
+function renderVoluntariosGenerales() {
+  const list = document.getElementById('voluntariosList');
+  if (!list) return;
+  const vols = appData.voluntariosGenerales || [];
+  if (vols.length === 0) {
+    list.innerHTML = '<div class="empty-msg">No hay voluntarios cargados aún</div>';
+    return;
+  }
+  list.innerHTML = vols.map((v, i) => `
+    <div class="contacto-card">
+      <div class="contacto-avatar" style="background:#e8f5e9">👤</div>
+      <div class="contacto-info">
+        <div class="contacto-nombre">${v.nombre} ${v.apellido}</div>
+        <div class="contacto-tel">📞 ${v.tel || 'Sin teléfono'}</div>
+      </div>
+      ${isAdmin ? `<button class="btn btn-danger btn-small" onclick="removeVoluntarioGeneral(${i})">🗑️</button>` : ''}
+    </div>
+  `).join('');
+}
 
-            let totalEgresos = totalGastos + totalDonaciones;
-            let diferencia = totalIngresos - totalEgresos;
-            let html = '<div class="gasto-resumen"><h2 style="text-align:center;margin-bottom:15px;color:var(--dark);">RESUMEN FINANCIERO</h2>';
-            html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0;">';
-            html += '<div style="background:#ffebee;padding:10px;border-radius:6px;text-align:center;border: 2px solid #d32f2f;"><div style="color:#d32f2f;font-size:0.9em;font-weight:bold;margin:0;">ENTRADA</div><div style="color:#d32f2f;font-size:1.4em;font-weight:bold;margin:5px 0 0 0;">$' + totalIngresos.toFixed(2) + '</div></div>';
-            html += '<div style="background:#e3f2fd;padding:10px;border-radius:6px;text-align:center;border: 2px solid #1976d2;"><div style="color:#1976d2;font-size:0.9em;font-weight:bold;margin:0;">SALIDA</div><div style="color:#1976d2;font-size:1.4em;font-weight:bold;margin:5px 0 0 0;">$' + totalEgresos.toFixed(2) + '</div></div>';
-            let colorDif = diferencia >= 0 ? '#4caf50' : '#ff6b6b';
-            html += '<div style="background:' + (diferencia >= 0 ? '#e8f5e9' : '#ffebee') + ';padding:10px;border-radius:6px;text-align:center;border: 2px solid ' + colorDif + ';"><div style="color:' + colorDif + ';font-size:0.9em;font-weight:bold;margin:0;">DIFERENCIA</div><div style="color:' + colorDif + ';font-size:1.4em;font-weight:bold;margin:5px 0 0 0;">$' + diferencia.toFixed(2) + '</div></div>';
-            html += '</div></div>';
+function addVoluntarioGeneral() {
+  const nombre = document.getElementById('volNombre').value.trim();
+  const apellido = document.getElementById('volApellido').value.trim();
+  const tel = document.getElementById('volTel').value.trim();
+  if (!nombre) { alert('Ingresá al menos el nombre'); return; }
+  if (!appData.voluntariosGenerales) appData.voluntariosGenerales = [];
+  appData.voluntariosGenerales.push({ nombre, apellido, tel });
+  document.getElementById('volNombre').value = '';
+  document.getElementById('volApellido').value = '';
+  document.getElementById('volTel').value = '';
+  document.getElementById('formVoluntario').style.display = 'none';
+  document.getElementById('btnAddVoluntario').style.display = 'block';
+  saveToFirebase();
+  renderVoluntariosGenerales();
+}
 
-            html += '<h3 style="margin-top:20px;margin-bottom:10px;color:var(--dark);">📋 Detalle Completo</h3>';
-            html += '<div style="background:white;padding:15px;border-radius:6px;overflow-x:auto;">';
-            if(data.gastos.length > 0){
-                html += '<div style="display:grid;grid-template-columns:1.5fr 1.2fr 1.2fr 1fr 1fr 80px;gap:8px;font-weight:bold;margin-bottom:10px;padding-bottom:10px;border-bottom:2px solid var(--gold);font-size:0.9em;"><div>Concepto</div><div>Persona</div><div>Categoría</div><div>Monto</div><div>Tipo</div><div></div></div>';
-                data.gastos.forEach((g, i) => {
-                    const icono = g.tipo === 'Gasto' ? '📉' : g.tipo === 'Donación' ? '🎁' : '📈';
-                    html += '<div class="gasto-item"><div><strong>' + g.concepto + '</strong></div><div>' + g.persona + '</div><div>' + g.categoria + '</div><div style="font-weight:bold;color:var(--gold);">$' + g.monto + '</div><div>' + icono + ' ' + g.tipo + '</div><div>' + (isAdmin ? '<button onclick="eliminarMovimiento(' + i + ')">✕</button>' : '') + '</div></div>';
-                });
-            } else {
-                html += '<div style="color:#999;text-align:center;padding:15px;">Sin movimientos registrados</div>';
-            }
-            html += '</div>';
+function removeVoluntarioGeneral(i) {
+  if (!confirm('¿Eliminar este voluntario?')) return;
+  appData.voluntariosGenerales.splice(i, 1);
+  saveToFirebase();
+  renderVoluntariosGenerales();
+}
 
-            html += '<div class="chart-wrapper"><canvas id="graficoGastos"></canvas></div>';
+// =============================================
+// COMPARTIR
+// =============================================
+function compartirWhatsApp() {
+  const url = window.location.href;
+  const msg = `🎉 *PEÑA 2026 - Agenda Digital*\n\nTe comparto el link para ver la agenda en tiempo real:\n${url}\n\n¡Todo actualizado al instante! 🔥`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
 
-            document.getElementById('gastosContent').innerHTML = html;
-            setTimeout(actualizarGrafico, 100);
-        }
+function copiarLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    alert('✅ Link copiado al portapapeles');
+  });
+}
 
-        function agregarGasto(){
-            const concepto = document.getElementById('gastoConcepto').value;
-            const persona = document.getElementById('gastoPersona').value;
-            const categoria = document.getElementById('gastoCategoria').value;
-            const tipo = document.getElementById('gastoTipo').value;
-            const monto = document.getElementById('gastoMonto').value;
+// =============================================
+// INIT
+// =============================================
+document.addEventListener('firebaseReady', () => {
+  initFirebase();
+});
 
-            if(concepto && persona && categoria && monto){
-                data.gastos.push({concepto, persona, categoria, tipo, monto});
-                document.getElementById('gastoConcepto').value = '';
-                document.getElementById('gastoPersona').value = '';
-                document.getElementById('gastoCategoria').value = '';
-                document.getElementById('gastoMonto').value = '';
-                guardarDatos();
-            } else {
-                alert('⚠️ Completa TODOS los campos');
-            }
-        }
-
-        function eliminarMovimiento(index){
-            if(confirm('¿Eliminar este movimiento?')){
-                data.gastos.splice(index, 1);
-                guardarDatos();
-            }
-        }
-
-        function actualizarGrafico(){
-            const gastoPorCategoria = {};
-            data.gastos.forEach(g => {
-                if(!gastoPorCategoria[g.categoria]) gastoPorCategoria[g.categoria] = 0;
-                if(g.tipo === 'Gasto' || g.tipo === 'Donación') gastoPorCategoria[g.categoria] += parseFloat(g.monto) || 0;
-            });
-
-            const ctx = document.getElementById('graficoGastos');
-            if(!ctx) return;
-
-            if(gastoChart) {
-                gastoChart.destroy();
-                gastoChart = null;
-            }
-
-            gastoChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(gastoPorCategoria).length > 0 ? Object.keys(gastoPorCategoria) : ['Sin datos'],
-                    datasets: [{
-                        data: Object.values(gastoPorCategoria).length > 0 ? Object.values(gastoPorCategoria) : [0],
-                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF9F43', '#A8E6CF', '#FFD3B6', '#FFAAA5', '#FF8B94'],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { 
-                            position: 'bottom',
-                            labels: { 
-                                padding: 15, 
-                                font: { size: 11, weight: 'bold' },
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            } 
-                        },
-                        tooltip: { 
-                            callbacks: { 
-                                label: function(context){ 
-                                    return context.label + ': $' + context.parsed.toFixed(2); 
-                                } 
-                            } 
-                        }
-                    }
-                }
-            });
-        }
-
-        function addShow(){
-            data.shows.push({ nombre: document.getElementById('newShowName').value, telefono: document.getElementById('newShowPhone').value, instagram: document.getElementById('newShowInsta').value });
-            document.getElementById('newShowName').value = '';
-            document.getElementById('newShowPhone').value = '';
-            document.getElementById('newShowInsta').value = '';
-            guardarDatos();
-        }
-
-        function addSponsor(){
-            data.sponsors.push({ nombre: document.getElementById('newSponsorName').value, telefono: document.getElementById('newSponsorPhone').value, dona: document.getElementById('newSponsorDona').value });
-            document.getElementById('newSponsorName').value = '';
-            document.getElementById('newSponsorPhone').value = '';
-            document.getElementById('newSponsorDona').value = '';
-            guardarDatos();
-        }
-
-        function addProveedor(){
-            data.proveedores.push({ nombre: document.getElementById('newProveedorName').value, telefono: document.getElementById('newProveedorPhone').value, compro: document.getElementById('newProveedorCompro').value });
-            document.getElementById('newProveedorName').value = '';
-            document.getElementById('newProveedorPhone').value = '';
-            document.getElementById('newProveedorCompro').value = '';
-            guardarDatos();
-        }
-
-        // Inicializar
-        cargarDatos().then(() => {
-            if(Object.keys(data).length === 0) {
-                data = JSON.parse(JSON.stringify(dataDefecto));
-                guardarDatos();
-            }
-            render();
-        });
-    </script>
+// Renderizado inicial mientras carga Firebase
+renderAll();
+</script>
 </body>
 </html>
